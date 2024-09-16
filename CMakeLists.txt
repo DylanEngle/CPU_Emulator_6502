@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7)
 
-project( CPU_Emulator_6502 )
+project( 6502 )
 
 # Turn on the ability to create folders to organize projects (.vcproj)
 # It creates "CMakePredefinedTargets" folder by default and adds CMake
@@ -8,5 +8,5 @@ project( CPU_Emulator_6502 )
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Sub-directories where more CMakeLists.txt exist
-add_subdirectory(CPU_Emulator_6502/src)
-add_subdirectory(CPU_Emulator_6502/test)
+add_subdirectory(6502/lib)
+add_subdirectory(6502/test)
