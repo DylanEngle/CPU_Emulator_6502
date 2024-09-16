@@ -154,6 +154,21 @@ struct m6502::CPU
 	s32 Execute( s32 Cycles, Mem& memory );
 
     // get address from zero page
-    m6502::Word m6502::CPU::AddrZeroPage(s32& Cycles, Mem& memory);
+    Word AddrZeroPage(s32& Cycles, Mem& memory);
+
+    //get address from zero page with x offset
+    Word AddrZeroPageX(s32& Cycles, Mem& memory);
+
+    //get address from zero page with y offset
+    Word AddrZeroPageY(s32& Cycles, Mem& memory);
+
+    //get address from absolute
+    Word AddrAbsolute(s32& Cycles, Mem& memory);
+
+    // get address from absolute with x offset
+    Word AddrAbsoluteX(s32& Cycles, Mem& memory);
+
+    //get address from absolute with y offset
+    Word AddrAbsoluteY(s32& Cycles, Mem& memory);
 };
 
