@@ -2,6 +2,16 @@
 
 m6502::s32 m6502::CPU::Execute(s32 Cycles, Mem &memory)
 {
+    /** Load a Register with the value from the memory address */
+	auto LoadRegister = 
+		[&Cycles,&memory,this]
+		( Word Address, Byte& Register )
+	{
+		Register = ReadByte( Cycles, Address, memory );
+		LoadRegisterSetStatus( Register );
+	};
+
+
     const s32 CyclesRequested = Cycles;
     while (Cycles > 0)
     {
@@ -18,59 +28,43 @@ m6502::s32 m6502::CPU::Execute(s32 Cycles, Mem &memory)
         case INS_LDA_ZP:
         {
             Word Address = AddrZeroPage(Cycles, memory);
-            A = ReadByte(Cycles, Address, memory);
-            LoadRegisterSetStatus(A);
+            LoadRegister(Address,A);
         }
         break;
         case INS_LDA_ZPX:
         {
             Word ZeroPageAddress = AddrZeroPageX(Cycles, memory);
-            A = ReadByte(Cycles, ZeroPageAddress, memory);
-            LoadRegisterSetStatus(A);
+            LoadRegister(ZeroPageAddress, A);
         }
         break;
         case INS_LDA_ABS:
         {
             Word AbsAddress = AddrAbsolute(Cycles, memory);
-            A = ReadByte(Cycles, AbsAddress, memory);
-            LoadRegisterSetStatus(A);
+            LoadRegister(AbsAddress,A);
         }
         break;
         case INS_LDA_ABSX:
         {
             Word AbsAddress = AddrAbsoluteX(Cycles, memory);
-            A = ReadByte(Cycles, AbsAddress, memory);
-            LoadRegisterSetStatus(A);
+            LoadRegister(AbsAddress,A);
         }
         break;
         case INS_LDA_ABSY:
         {
             Word AbsAddress = AddrAbsoluteY(Cycles, memory);
-            A = ReadByte(Cycles, AbsAddress, memory);
-            LoadRegisterSetStatus(A);
+            LoadRegister(AbsAddress,A);
         }
         break;
         case INS_LDA_INDX:
         {
-            Byte ZPAddress = FetchByte(Cycles, memory);
-            ZPAddress += X;
-            Cycles--;
-            Word EffectiveAddress = ReadWord(Cycles, ZPAddress, memory);
-            A = ReadByte(Cycles, EffectiveAddress, memory);
-            LoadRegisterSetStatus(A);
+            Word EffectiveAddress = AddrIndirectX(Cycles,memory);
+            LoadRegister(EffectiveAddress,A);
         }
         break;
         case INS_LDA_INDY:
         {
-            Byte ZPAddress = FetchByte(Cycles, memory);
-            Word EffectiveAddress = ReadWord(Cycles, ZPAddress, memory);
-            Word EffectiveAddressY = EffectiveAddress + Y;
-            A = ReadByte(Cycles, EffectiveAddressY, memory);
-            if (EffectiveAddressY - EffectiveAddress >= 0xFF)
-            {
-                Cycles--;
-            }
-            LoadRegisterSetStatus(A);
+            Word EffectiveAddressY = AddrIndirectY(Cycles, memory);
+            LoadRegister(EffectiveAddressY,A);
         }
         break;
 
@@ -153,6 +147,107 @@ m6502::s32 m6502::CPU::Execute(s32 Cycles, Mem &memory)
         }
         break;
 
+        //Store Accumulator in Memory
+        case INS_STA_ZP:
+        {
+            Word Address = AddrZeroPage(Cycles, memory);
+            WriteByte(A, Cycles, Address, memory);
+        }
+        break;
+
+        case INS_STA_ZPX:
+        {
+            Word Address = AddrZeroPageX(Cycles, memory);
+            WriteByte(A, Cycles, Address, memory);
+        }
+        break;
+
+        case INS_STA_ABS:
+        {
+            Word Address = AddrAbsolute(Cycles, memory);
+            WriteByte(A, Cycles, Address, memory);
+        }
+        break;
+
+        case INS_STA_ABSX:
+        {
+            Word Address = AddrAbsoluteX(Cycles, memory);
+            WriteByte(A, Cycles, Address, memory);
+            Cycles--;
+        }
+        break;
+
+        case INS_STA_ABSY:
+        {
+            Word Address = AddrAbsoluteY(Cycles, memory);
+            WriteByte(A, Cycles, Address, memory);
+            Cycles--;
+        }
+        break;
+
+        case INS_STA_INDX:
+        {
+            Word Address = AddrIndirectX(Cycles, memory);
+            WriteByte(A, Cycles, Address, memory);
+        }
+        break;
+
+        case INS_STA_INDY:
+        {
+            Word Address = AddrIndirectY(Cycles, memory);
+            WriteByte(A, Cycles, Address, memory);
+            Cycles--;
+        }
+        break;
+
+
+
+
+
+        //Store X Register in Memory
+        case INS_STX_ZP:
+        {
+            Word Address = AddrZeroPage(Cycles, memory);
+            WriteByte(X, Cycles, Address, memory);
+        }
+        break;
+
+        case INS_STX_ZPY:
+        {
+            Word Address = AddrZeroPageY(Cycles, memory);
+            WriteByte(X, Cycles, Address, memory);
+        }
+        break;
+
+        case INS_STX_ABS:
+        {
+            Word Address = AddrAbsolute(Cycles, memory);
+            WriteByte(X, Cycles, Address, memory);
+        }
+        break;
+
+        //Store Y Register in Memory
+        case INS_STY_ZP:
+        {
+            Word Address = AddrZeroPage(Cycles, memory);
+            WriteByte(Y, Cycles, Address, memory);
+        }
+        break;
+
+        case INS_STY_ZPX:
+        {
+            Word Address = AddrZeroPageX(Cycles, memory);
+            WriteByte(Y, Cycles, Address, memory);
+        }
+        break;
+
+        case INS_STY_ABS:
+        {
+            Word Address = AddrAbsolute(Cycles, memory);
+            WriteByte(Y, Cycles, Address, memory);
+        }
+        break;
+
         case INS_JSR:
         {
             Word SubAddr = FetchWord(Cycles, memory);
@@ -225,3 +320,28 @@ m6502::Word m6502::CPU::AddrAbsoluteY(s32 &Cycles, Mem &memory)
     }
     return AbsAddressY;
 }
+
+m6502::Word m6502::CPU::AddrIndirectX(s32& Cycles, Mem& memory)
+{
+    Byte ZPAddress = FetchByte(Cycles, memory);
+    ZPAddress += X;
+    Cycles--;
+    Word EffectiveAddress = ReadWord(Cycles, ZPAddress, memory);
+    return EffectiveAddress;
+}
+
+m6502::Word m6502::CPU::AddrIndirectY(s32& Cycles, Mem& memory)
+{
+    Byte ZPAddress = FetchByte(Cycles, memory);
+    Word EffectiveAddress = ReadWord(Cycles, ZPAddress, memory);
+    Word EffectiveAddressY = EffectiveAddress + Y;
+           
+    if (EffectiveAddressY - EffectiveAddress >= 0xFF)
+    {
+        Cycles--;
+    }
+    return EffectiveAddressY;
+}
+
+
+

@@ -100,7 +100,7 @@ struct m6502::CPU
     }
 
     // read byte without incrementing PC
-    Byte ReadByte(s32& Cycles, Word Address, Mem& memory)
+    Byte ReadByte(s32& Cycles, Word Address, const Mem& memory)
     {
         Byte Data = memory[Address];
         Cycles--;
@@ -108,11 +108,17 @@ struct m6502::CPU
     }
 
     // read word without incrementing PC
-    Word ReadWord(s32& Cycles, Word Address, Mem& memory)
+    Word ReadWord(s32& Cycles, Word Address, const Mem& memory)
     {
         Byte LoByte = ReadByte(Cycles,Address,memory);
         Byte HiByte = ReadByte(Cycles,Address+1,memory);
         return LoByte | (HiByte << 8);
+    }
+
+    void WriteByte(Byte Value, s32& Cycles, Word Address, Mem& memory)
+    {
+        memory[Address] = Value;
+        Cycles--;
     }
 
 
@@ -142,6 +148,25 @@ struct m6502::CPU
     INS_LDY_ZPX = 0xB4,
     INS_LDY_ABS = 0xAC,
     INS_LDY_ABSX = 0xBC,
+
+    //Store Accumulator in Memory
+    INS_STA_ZP = 0x85,
+    INS_STA_ZPX = 0x95,
+    INS_STA_ABS = 0x8D,
+    INS_STA_ABSX = 0x9D,
+    INS_STA_ABSY = 0x99,
+    INS_STA_INDX = 0x81,
+    INS_STA_INDY = 0x91,
+
+    //Store X Register in Memory
+    INS_STX_ZP = 0x86,
+    INS_STX_ZPY = 0x96,
+    INS_STX_ABS = 0x8E,
+
+    //Store Y Register in Memory
+    INS_STY_ZP = 0x84,
+    INS_STY_ZPX = 0x94,
+    INS_STY_ABS = 0x8C,
     INS_JSR = 0x20;
 
 
@@ -172,5 +197,11 @@ struct m6502::CPU
 
     //get address from absolute with y offset
     Word AddrAbsoluteY(s32& Cycles, Mem& memory);
+
+    //get addresss from Indexed Indirect X
+    Word AddrIndirectX(s32& Cycles, Mem& memory);
+
+    //get address from Indexed Indirect Y
+    Word AddrIndirectY(s32& Cycles, Mem& memory);
 };
 
