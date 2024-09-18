@@ -171,17 +171,15 @@ m6502::s32 m6502::CPU::Execute(s32 Cycles, Mem &memory)
 
         case INS_STA_ABSX:
         {
-            Word Address = AddrAbsoluteX(Cycles, memory);
+            Word Address = AddrAbsoluteX5(Cycles, memory);
             WriteByte(A, Cycles, Address, memory);
-            Cycles--;
         }
         break;
 
         case INS_STA_ABSY:
         {
-            Word Address = AddrAbsoluteY(Cycles, memory);
+            Word Address = AddrAbsoluteY5(Cycles, memory);
             WriteByte(A, Cycles, Address, memory);
-            Cycles--;
         }
         break;
 
@@ -194,15 +192,10 @@ m6502::s32 m6502::CPU::Execute(s32 Cycles, Mem &memory)
 
         case INS_STA_INDY:
         {
-            Word Address = AddrIndirectY(Cycles, memory);
+            Word Address = AddrIndirectY6(Cycles, memory);
             WriteByte(A, Cycles, Address, memory);
-            Cycles--;
         }
         break;
-
-
-
-
 
         //Store X Register in Memory
         case INS_STX_ZP:
@@ -251,9 +244,7 @@ m6502::s32 m6502::CPU::Execute(s32 Cycles, Mem &memory)
         case INS_JSR:
         {
             Word SubAddr = FetchWord(Cycles, memory);
-            memory.WriteWord(Cycles, SP, PC - 1);
-            SP++;
-            Cycles--;
+            PushPCToStack(Cycles,memory);
             PC = SubAddr;
             Cycles--;
         }
@@ -269,13 +260,13 @@ m6502::s32 m6502::CPU::Execute(s32 Cycles, Mem &memory)
     return NumCyclesUsed;
 }
 
-m6502::Word m6502::CPU::AddrZeroPage(s32 &Cycles, Mem &memory)
+m6502::Word m6502::CPU::AddrZeroPage(s32& Cycles, Mem& memory)
 {
     Word ZeroPageAddr = FetchByte(Cycles, memory);
     return ZeroPageAddr;
 }
 
-m6502::Word m6502::CPU::AddrZeroPageX(s32 &Cycles, Mem &memory)
+m6502::Word m6502::CPU::AddrZeroPageX(s32& Cycles, Mem& memory)
 {
     Word ZeroPageAddr = FetchByte(Cycles, memory);
     ZeroPageAddr += X;
@@ -283,7 +274,7 @@ m6502::Word m6502::CPU::AddrZeroPageX(s32 &Cycles, Mem &memory)
     return ZeroPageAddr;
 }
 
-m6502::Word m6502::CPU::AddrZeroPageY(s32 &Cycles, Mem &memory)
+m6502::Word m6502::CPU::AddrZeroPageY(s32& Cycles, Mem& memory)
 {
     Word ZeroPageAddr = FetchByte(Cycles, memory);
     ZeroPageAddr += Y;
@@ -291,13 +282,13 @@ m6502::Word m6502::CPU::AddrZeroPageY(s32 &Cycles, Mem &memory)
     return ZeroPageAddr;
 }
 
-m6502::Word m6502::CPU::AddrAbsolute(s32 &Cycles, Mem &memory)
+m6502::Word m6502::CPU::AddrAbsolute(s32& Cycles, Mem& memory)
 {
     Word AbsAddress = FetchWord(Cycles, memory);
     return AbsAddress;
 }
 
-m6502::Word m6502::CPU::AddrAbsoluteX(s32 &Cycles, Mem &memory)
+m6502::Word m6502::CPU::AddrAbsoluteX(s32& Cycles, Mem& memory)
 {
     Word AbsAddress = FetchWord(Cycles, memory);
     Word AbsAddressX = AbsAddress + X;
@@ -306,6 +297,14 @@ m6502::Word m6502::CPU::AddrAbsoluteX(s32 &Cycles, Mem &memory)
     {
         Cycles--;
     }
+    return AbsAddressX;
+}
+
+m6502::Word m6502::CPU::AddrAbsoluteX5(s32& Cycles, Mem& memory)
+{
+    Word AbsAddress = FetchWord(Cycles, memory);
+    Word AbsAddressX = AbsAddress + X;
+    Cycles--;
     return AbsAddressX;
 }
 
@@ -318,6 +317,14 @@ m6502::Word m6502::CPU::AddrAbsoluteY(s32 &Cycles, Mem &memory)
     {
         Cycles--;
     }
+    return AbsAddressY;
+}
+
+m6502::Word m6502::CPU::AddrAbsoluteY5(s32 &Cycles, Mem &memory)
+{
+    Word AbsAddress = FetchWord(Cycles, memory);
+    Word AbsAddressY = AbsAddress + Y;
+    Cycles--;
     return AbsAddressY;
 }
 
@@ -340,6 +347,15 @@ m6502::Word m6502::CPU::AddrIndirectY(s32& Cycles, Mem& memory)
     {
         Cycles--;
     }
+    return EffectiveAddressY;
+}
+
+m6502::Word m6502::CPU::AddrIndirectY6(s32& Cycles, Mem& memory)
+{
+    Byte ZPAddress = FetchByte(Cycles, memory);
+    Word EffectiveAddress = ReadWord(Cycles, ZPAddress, memory);
+    Word EffectiveAddressY = EffectiveAddress + Y; 
+    Cycles--;
     return EffectiveAddressY;
 }
 

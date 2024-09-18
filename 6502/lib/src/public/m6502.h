@@ -41,20 +41,12 @@ struct m6502::Mem
     {   
         return Data[Address];
     }
-
-    // write two bytes
-    void WriteWord(s32& Cycles, Word Value, u32 Address)
-    {
-        Data[Address] = Value & 0xFF;
-        Data[Address+1] = (Value >> 8);
-        Cycles -= 2;
-    }
 };
 
 struct m6502::CPU
 {
     Word PC; // program counter
-    Word SP; // stack pointer
+    Byte SP; // stack pointer
 
     Byte A, X, Y; //accumulator, Index Register X, Index Register Y
 
@@ -70,7 +62,7 @@ struct m6502::CPU
     void Reset(Mem& memory)
     {
         PC = 0xFFFC;
-        SP = 0x0100;
+        SP = 0xFF;
         D = 0;
         C = Z = I = D = B = V = N = 0; //clear all flags on reset
         A = X = Y = 0;
@@ -115,10 +107,32 @@ struct m6502::CPU
         return LoByte | (HiByte << 8);
     }
 
+    //write one byte to memory
     void WriteByte(Byte Value, s32& Cycles, Word Address, Mem& memory)
     {
         memory[Address] = Value;
         Cycles--;
+    }
+
+    // write two bytes to memory
+    void WriteWord(Word Value, s32& Cycles, Word Address, Mem& memory)
+    {
+        memory[Address] = Value & 0xFF;
+        memory[Address+1] = (Value >> 8);
+        Cycles -= 2;
+    }
+
+    //return stack pointer as full 16 bit address
+    Word SPToWord() const
+    {
+        return 0x100 | SP;
+    }
+
+    //push the pc -1 onto stack
+    void PushPCToStack(s32& Cycles, Mem& memory)
+    {
+        WriteWord(PC-1, Cycles, SPToWord(), memory);
+        SP-=2;
     }
 
 
@@ -167,7 +181,16 @@ struct m6502::CPU
     INS_STY_ZP = 0x84,
     INS_STY_ZPX = 0x94,
     INS_STY_ABS = 0x8C,
-    INS_JSR = 0x20;
+
+    //Jump to Subroutine
+    INS_JSR = 0x20,
+    
+    //Return from Subroutine
+    INS_RTS = 0x60,
+    
+    
+    
+    ;
 
 
 
@@ -195,13 +218,22 @@ struct m6502::CPU
     // get address from absolute with x offset
     Word AddrAbsoluteX(s32& Cycles, Mem& memory);
 
+    // get address from absolute with x offset, always consume 5 cycles
+    Word AddrAbsoluteX5(s32& Cycles, Mem& memory);
+
     //get address from absolute with y offset
     Word AddrAbsoluteY(s32& Cycles, Mem& memory);
+
+    //get address from absolute with y offset, always consume 5 cycles
+    Word AddrAbsoluteY5(s32& Cycles, Mem& memory);
 
     //get addresss from Indexed Indirect X
     Word AddrIndirectX(s32& Cycles, Mem& memory);
 
     //get address from Indexed Indirect Y
     Word AddrIndirectY(s32& Cycles, Mem& memory);
+
+    //get address from Indexed Indirect Y, always consume 6 cycles
+    Word AddrIndirectY6(s32& Cycles, Mem& memory);
 };
 
