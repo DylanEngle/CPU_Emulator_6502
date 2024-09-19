@@ -241,12 +241,22 @@ m6502::s32 m6502::CPU::Execute(s32 Cycles, Mem &memory)
         }
         break;
 
+        //jump to subroutine
         case INS_JSR:
         {
             Word SubAddr = FetchWord(Cycles, memory);
             PushPCToStack(Cycles,memory);
             PC = SubAddr;
             Cycles--;
+        }
+        break;
+
+        //return from subroutine
+        case INS_RTS:
+        {
+            Word Address = PopWordFromStack(Cycles, memory);
+            PC = Address+1;
+            Cycles-=2;
         }
         break;
         default:
