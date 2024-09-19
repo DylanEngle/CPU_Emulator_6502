@@ -51,13 +51,18 @@ struct m6502::CPU
     Byte A, X, Y; //accumulator, Index Register X, Index Register Y
 
     //processor status flags
-    Byte C: 1; // carry flag
-    Byte Z: 1; // zero flag
-    Byte I: 1; // interrupt disable flag
-    Byte D: 1; // decimal mode flag
-    Byte B: 1; // break command flag
-    Byte V: 1; // overflow flag
-    Byte N: 1; // negative flag
+    union
+    {
+        Byte PS;
+        
+        Byte C: 1; // carry flag
+        Byte Z: 1; // zero flag
+        Byte I: 1; // interrupt disable flag
+        Byte D: 1; // decimal mode flag
+        Byte B: 1; // break command flag
+        Byte V: 1; // overflow flag
+        Byte N: 1; // negative flag
+    };
 
     void Reset(Mem& memory)
     {
